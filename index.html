@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b2417">
+<title>Jogo da Onça 3D</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+<!-- TELA INICIAL -->
+<main id="menu" class="screen">
+  <div class="band"></div>
+  <div class="menu-inner">
+    <div class="emblem">🐆</div>
+    <h1>JOGO DA ONÇA <span>3D</span></h1>
+    <p class="sub">Um jogo de estratégia, inteligência e cerco.</p>
+    <div class="buttons">
+      <button class="btn big" id="btn-online">JOGAR ONLINE</button>
+      <button class="btn" id="btn-create">CRIAR SALA</button>
+      <button class="btn" id="btn-join">ENTRAR EM UMA SALA</button>
+      <button class="btn" id="btn-ai">JOGAR CONTRA O COMPUTADOR</button>
+      <button class="btn ghost" id="btn-rules">COMO JOGAR</button>
+      <button class="btn ghost" id="btn-settings">CONFIGURAÇÕES</button>
+    </div>
+    <p class="foot">Inspirado no Adugo, jogo tradicional de povos indígenas do Brasil.</p>
+  </div>
+  <div class="band bottom"></div>
+</main>
+
+<!-- PARTIDA -->
+<section id="game" class="screen hidden">
+  <div id="stage"></div>
+  <div id="hud">
+    <div class="top">
+      <div class="pcard" id="card-j"><b id="hud-j-name">Onça</b><span id="hud-j-info"></span></div>
+      <div class="center">
+        <div id="hud-turn">—</div>
+        <div id="hud-msg"></div>
+        <div id="room" class="hidden">Sala: <b id="room-code"></b> <button class="mini" id="btn-copy">Copiar</button></div>
+      </div>
+      <div class="pcard right" id="card-d"><b id="hud-d-name">Cachorros</b><span id="hud-d-info"></span></div>
+    </div>
+    <div id="banner" class="hidden"></div>
+    <div class="bottom-bar">
+      <button class="btn small" id="btn-help">COMO JOGAR</button>
+      <button class="btn small" id="btn-cam">AJUSTAR CÂMERA</button>
+      <button class="btn small gold hidden" id="btn-endchain">ENCERRAR JOGADA</button>
+      <button class="btn small danger" id="btn-leave">SAIR DA PARTIDA</button>
+    </div>
+  </div>
+</section>
+
+<!-- REGRAS -->
+<div class="modal hidden" id="m-rules"><div class="box wide">
+  <h2>Como jogar</h2>
+  <div class="scroll">
+    <h3>Objetivo</h3>
+    <p>Dois jogadores: um controla a <b>onça</b>, o outro controla os <b>14 cachorros</b>.</p>
+    <p><b>Vitória da onça:</b> capturar 5 cachorros.<br><b>Vitória dos cachorros:</b> cercar a onça, bloqueando todos os movimentos dela.</p>
+    <h3>O tabuleiro</h3>
+    <p>Uma área quadrada (5×5 pontos, com diagonais) e uma extensão triangular em uma das pontas. As peças só andam entre pontos ligados por uma linha.</p>
+    <h3>Cachorros</h3>
+    <ul>
+      <li>Começam fora do tabuleiro (as 2 fileiras na frente do tabuleiro). Os cachorros jogam primeiro.</li>
+      <li>Fase de colocação: a cada vez, você coloca <b>um</b> cachorro em qualquer ponto vazio.</li>
+      <li>Depois que os 14 estiverem no tabuleiro, cada vez você move <b>um</b> cachorro para um ponto vazio ligado por linha.</li>
+      <li>Cachorros não pulam e não capturam a onça.</li>
+    </ul>
+    <h3>Onça</h3>
+    <ul>
+      <li>Começa no centro do quadrado.</li>
+      <li>Move para um ponto vazio ligado por linha.</li>
+      <li>Captura saltando em linha reta sobre um cachorro, caindo no ponto vazio logo depois. O cachorro sai do jogo.</li>
+      <li>Se, depois de capturar, puder capturar de novo, a jogada continua: faça a próxima captura ou toque em <b>ENCERRAR JOGADA</b>.</li>
+    </ul>
+    <h3>Como mover no jogo</h3>
+    <ol>
+      <li>Toque/clique na peça que quer mover.</li>
+      <li>Os pontos disponíveis são destacados (verde = mover, vermelho = captura).</li>
+      <li>Toque/clique no ponto desejado: a peça anda sozinha.</li>
+      <li>Na fase de colocação dos cachorros, é só tocar no ponto vazio desejado.</li>
+    </ol>
+    <h3>Câmera</h3>
+    <p>Arraste para girar, use a roda ou o gesto de pinça para aproximar/afastar. <b>AJUSTAR CÂMERA</b> volta à visão padrão.</p>
+  </div>
+  <button class="btn" data-close>FECHAR</button>
+</div></div>
+
+<!-- CONFIGURAÇÕES -->
+<div class="modal hidden" id="m-settings"><div class="box">
+  <h2>Configurações</h2>
+  <label class="row"><input type="checkbox" id="chk-sound"> Efeitos sonoros</label>
+  <label class="row"><input type="checkbox" id="chk-shadows"> Sombras (desligue se o jogo estiver lento)</label>
+  <button class="btn" data-close>FECHAR</button>
+</div></div>
+
+<!-- ONLINE -->
+<div class="modal hidden" id="m-online"><div class="box">
+  <h2>Jogar online</h2>
+  <div id="online-forms">
+    <label>Seu nome<input id="on-name" maxlength="20" placeholder="Seu nome" autocomplete="nickname"></label>
+    <fieldset>
+      <legend>Criar sala</legend>
+      <label>Seu lado
+        <select id="on-side"><option value="random">Sorteio</option><option value="j">Onça</option><option value="d">Cachorros</option></select>
+      </label>
+      <button class="btn" id="btn-do-create">CRIAR SALA</button>
+    </fieldset>
+    <fieldset>
+      <legend>Entrar em uma sala</legend>
+      <label>Código da sala<input id="on-code" maxlength="10" placeholder="ONCA-4821" autocapitalize="characters" autocomplete="off"></label>
+      <button class="btn" id="btn-do-join">ENTRAR</button>
+    </fieldset>
+  </div>
+  <div id="wait-panel" class="hidden">
+    <p>Sala criada! Envie este código para seu amigo:</p>
+    <div class="code" id="wait-code">—</div>
+    <button class="btn small" id="btn-copy-wait">COPIAR CÓDIGO</button>
+    <p class="hint">Aguardando o adversário entrar… Mantenha esta página aberta.</p>
+    <button class="btn ghost small" id="btn-cancel-wait">CANCELAR</button>
+  </div>
+  <p id="on-status" class="status"></p>
+  <button class="btn ghost" data-close id="btn-close-online">FECHAR</button>
+</div></div>
+
+<!-- CONTRA O COMPUTADOR -->
+<div class="modal hidden" id="m-ai"><div class="box">
+  <h2>Contra o computador</h2>
+  <label>Você controla
+    <select id="ai-side"><option value="j">A onça</option><option value="d">Os cachorros</option></select>
+  </label>
+  <label>Dificuldade
+    <select id="ai-level"><option value="facil">Fácil</option><option value="medio" selected>Médio</option><option value="dificil">Difícil</option></select>
+  </label>
+  <button class="btn" id="btn-start-ai">COMEÇAR</button>
+  <button class="btn ghost" data-close>CANCELAR</button>
+</div></div>
+
+<!-- FIM DE PARTIDA -->
+<div class="modal hidden" id="m-end"><div class="box">
+  <h2 id="end-title">—</h2>
+  <p id="end-sub"></p>
+  <button class="btn" id="btn-rematch">NOVA PARTIDA</button>
+  <button class="btn ghost" id="btn-tomenu">VOLTAR AO MENU</button>
+  <button class="btn ghost danger hidden" id="btn-closeroom">ENCERRAR SALA</button>
+</div></div>
+
+<script type="module" src="game.js"></script>
+</body>
+</html>
